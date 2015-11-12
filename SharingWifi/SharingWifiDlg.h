@@ -26,6 +26,7 @@ protected:
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnClickedBtnMin();
 	afx_msg void OnClickedBtnClose();
+	afx_msg void OnExit();
 	afx_msg LRESULT OnNotifyicon(WPARAM wParam, LPARAM lParam);
 
 private:

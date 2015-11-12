@@ -32,7 +32,8 @@ BEGIN_MESSAGE_MAP(CSharingWifiDlg, CWnd)
 	ON_WM_LBUTTONDBLCLK()
 	ON_BN_CLICKED(IDC_BTNMIN, OnClickedBtnMin)
 	ON_BN_CLICKED(IDC_BTNCLOSE, OnClickedBtnClose)
-	ON_MESSAGE(WM_NOTIFYICON, &CSharingWifiDlg::OnNotifyicon)
+	ON_BN_CLICKED(IDC_EXIT, OnExit)
+	ON_MESSAGE(WM_NOTIFYICON, OnNotifyicon)
 END_MESSAGE_MAP()
 
 
@@ -228,6 +229,11 @@ void CSharingWifiDlg::OnClickedBtnClose()
 	//Shell_NotifyIcon(NIM_ADD, &m_sNotifyIconData);
 	ShowWindow(SW_HIDE);
 }
+void CSharingWifiDlg::OnExit()
+{
+	Shell_NotifyIcon(NIM_DELETE, &m_sNotifyIconData);
+	SendMessage(WM_SYSCOMMAND, SC_CLOSE, 0);
+}
 
 
 afx_msg LRESULT CSharingWifiDlg::OnNotifyicon(WPARAM wParam, LPARAM lParam)
@@ -240,7 +246,7 @@ afx_msg LRESULT CSharingWifiDlg::OnNotifyicon(WPARAM wParam, LPARAM lParam)
 						   GetCursorPos(lpPoint);	// 得到鼠标位置
 						   CMenu menu;
 						   menu.CreatePopupMenu();	// 声明一个弹出式菜单
-						   menu.AppendMenu(MF_STRING, WM_DESTROY, _T("退出"));	// 增加菜单项“退出”，点击则发送消息WM_DESTROY给主窗口将程序结束
+						   menu.AppendMenu(MF_STRING, IDC_EXIT, _T("退出"));	// 增加菜单项“退出”，点击则发送消息给主窗口将程序结束
 						   SetForegroundWindow();
 						   menu.TrackPopupMenu(TPM_LEFTALIGN, lpPoint->x, lpPoint->y, this);	// 确定弹出式菜单的位置
 						   menu.Detach();	// 资源回收
