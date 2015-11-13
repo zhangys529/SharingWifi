@@ -26,12 +26,13 @@ BEGIN_MESSAGE_MAP(CSharingWifiDlg, CWnd)
 	ON_WM_NCACTIVATE()
 	ON_WM_PAINT()
 	ON_WM_SIZE()
+	ON_WM_CLOSE()
 	ON_WM_GETMINMAXINFO()
 	ON_WM_HOTKEY()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONDBLCLK()
 	ON_BN_CLICKED(IDC_BTNMIN, OnClickedBtnMin)
-	ON_BN_CLICKED(IDC_BTNCLOSE, OnClickedBtnClose)
+	ON_BN_CLICKED(IDC_BTNCLOSE, OnClose)
 	ON_BN_CLICKED(IDC_EXIT, OnExit)
 	ON_MESSAGE(WM_NOTIFYICON, OnNotifyicon)
 END_MESSAGE_MAP()
@@ -65,6 +66,31 @@ BOOL CSharingWifiDlg::PreCreateWindow(CREATESTRUCT& cs)
 	return RegisterClassEx(&wcex);
 
 	//return CWnd::PreCreateWindow(cs);
+}
+
+
+BOOL CSharingWifiDlg::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO:  在此添加专用代码和/或调用基类
+	if (VK_ESCAPE == pMsg->wParam)
+	{
+		OnClose();
+	}
+	if (VK_RETURN == pMsg->wParam)
+	{
+		char szWndType[256];
+		GetClassName(GetFocus()->m_hWnd, szWndType, 256);
+		if (_T("Button") != szWndType)
+		{
+			pMsg->wParam = VK_TAB;
+		}
+	}
+	if (VK_TAB == pMsg->wParam)
+	{
+		GetNextDlgTabItem(GetFocus())->SetFocus();
+	}
+
+	return CWnd::PreTranslateMessage(pMsg);
 }
 
 
@@ -111,6 +137,10 @@ int CSharingWifiDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_sNotifyIconData.hIcon = (HICON)GetClassLong(m_hWnd, GCL_HICON);
 	strcpy_s(m_sNotifyIconData.szTip, 20, _T("wifi"));
 	Shell_NotifyIcon(NIM_ADD, &m_sNotifyIconData);
+
+	m_cEdit[0].Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP, CRect(100, 250, 200, 270), this, 10001);
+	m_cEdit[0].SetFocus();
+	m_cEdit[1].Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_PASSWORD, CRect(100, 280, 200, 300), this, 10001);
 
 	return 0;
 }
@@ -175,6 +205,15 @@ void CSharingWifiDlg::OnSize(UINT nType, int cx, int cy)
 }
 
 
+void CSharingWifiDlg::OnClose()
+{
+	// TODO:  在此添加消息处理程序代码和/或调用默认值
+	ShowWindow(SW_HIDE);
+
+	//CWnd::OnClose();
+}
+
+
 void CSharingWifiDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
@@ -223,16 +262,10 @@ void CSharingWifiDlg::OnClickedBtnMin()
 {
 	SendMessage(WM_SYSCOMMAND, SC_MINIMIZE, 0);
 }
-void CSharingWifiDlg::OnClickedBtnClose()
-{
-	//SendMessage(WM_SYSCOMMAND, SC_CLOSE, 0);
-	//Shell_NotifyIcon(NIM_ADD, &m_sNotifyIconData);
-	ShowWindow(SW_HIDE);
-}
 void CSharingWifiDlg::OnExit()
 {
 	Shell_NotifyIcon(NIM_DELETE, &m_sNotifyIconData);
-	SendMessage(WM_SYSCOMMAND, SC_CLOSE, 0);
+	DestroyWindow();
 }
 
 

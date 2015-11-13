@@ -42,7 +42,7 @@ BOOL CSharingWifiApp::InitInstance()
 	CWinApp::InitInstance();
 
 	m_pMainWnd = new CSharingWifiDlg();
-	m_pMainWnd->CreateEx(0, _T("SHARINGWIFIDLG"), _T(""), WS_POPUPWINDOW | WS_THICKFRAME | WS_MINIMIZEBOX,
+	m_pMainWnd->CreateEx(0, _T("SHARINGWIFIDLG"), _T("Wifi"), WS_POPUPWINDOW | WS_THICKFRAME | WS_MINIMIZEBOX,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL);
 	m_pMainWnd->ShowWindow(SW_SHOW);
 
