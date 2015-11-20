@@ -27,14 +27,18 @@ protected:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnClickedBtnMin();
+	afx_msg void OnClickedBtnClose();
 	afx_msg void OnExit();
 	afx_msg LRESULT OnNotifyicon(WPARAM wParam, LPARAM lParam);
 
 private:
+	NOTIFYICONDATA m_sNotifyIconData;
 	CImageButton m_cImgBtnMin;
 	CImageButton m_cImgBtnClose;
+	CImageButton m_cImgBtnSave;
 	CEdit m_cEdit[2];
-	NOTIFYICONDATA m_sNotifyIconData;
+	char m_szName[20];
+	char m_szPassword[50];
 };
 
 

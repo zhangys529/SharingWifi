@@ -55,7 +55,7 @@ BOOL CImageButton::PreCreateWindow(CREATESTRUCT& cs)
 	wcex.hInstance = cs.hInstance;
 	wcex.hIcon = wcex.hIconSm = (HICON)LoadIcon(cs.hInstance, MAKEINTRESOURCE(IDR_MAINFRAME));
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+	wcex.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = cs.lpszClass;
 	return RegisterClassEx(&wcex);

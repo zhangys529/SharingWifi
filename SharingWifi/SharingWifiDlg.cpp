@@ -12,8 +12,18 @@ IMPLEMENT_DYNAMIC(CSharingWifiDlg, CWnd)
 
 CSharingWifiDlg::CSharingWifiDlg()
 {
+	m_sNotifyIconData.hWnd = NULL;
 	m_cImgBtnMin.m_hWnd = NULL;
 	m_cImgBtnClose.m_hWnd = NULL;
+	m_cImgBtnSave.m_hWnd = NULL;
+	m_cEdit[0].m_hWnd = NULL;
+	m_cEdit[1].m_hWnd = NULL;
+
+	WSADATA wsaData;
+	WSAStartup(MAKEWORD(1, 1), &wsaData);
+	gethostname(m_szName, sizeof(m_szName));
+	WSACleanup();
+	sprintf_s(m_szPassword, sizeof(m_szPassword), m_szName);
 }
 
 CSharingWifiDlg::~CSharingWifiDlg()
@@ -32,7 +42,7 @@ BEGIN_MESSAGE_MAP(CSharingWifiDlg, CWnd)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONDBLCLK()
 	ON_BN_CLICKED(IDC_BTNMIN, OnClickedBtnMin)
-	ON_BN_CLICKED(IDC_BTNCLOSE, OnClose)
+	ON_BN_CLICKED(IDC_BTNCLOSE, OnClickedBtnClose)
 	ON_BN_CLICKED(IDC_EXIT, OnExit)
 	ON_MESSAGE(WM_NOTIFYICON, OnNotifyicon)
 END_MESSAGE_MAP()
@@ -60,7 +70,7 @@ BOOL CSharingWifiDlg::PreCreateWindow(CREATESTRUCT& cs)
 	wcex.hInstance = cs.hInstance;
 	wcex.hIcon = wcex.hIconSm = LoadIcon(cs.hInstance, MAKEINTRESOURCE(IDR_MAINFRAME));
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+	wcex.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = cs.lpszClass;
 	return RegisterClassEx(&wcex);
@@ -80,7 +90,7 @@ BOOL CSharingWifiDlg::PreTranslateMessage(MSG* pMsg)
 	{
 		char szWndType[256];
 		GetClassName(GetFocus()->m_hWnd, szWndType, 256);
-		if (_T("Button") != szWndType)
+		if ("CImageButton" != szWndType)
 		{
 			pMsg->wParam = VK_TAB;
 		}
@@ -97,8 +107,15 @@ BOOL CSharingWifiDlg::PreTranslateMessage(MSG* pMsg)
 void CSharingWifiDlg::PostNcDestroy()
 {
 	// TODO:  在此添加专用代码和/或调用基类
-	Shell_NotifyIcon(NIM_DELETE, &m_sNotifyIconData);
+	char szCommand[128];
+	sprintf_s(szCommand, sizeof(szCommand), "netsh wlan stop hostednetwork");
+	system(szCommand);
+	if (m_sNotifyIconData.hWnd)
+	{
+		Shell_NotifyIcon(NIM_DELETE, &m_sNotifyIconData);
+	}
 	delete this;
+	CoUninitialize();
 
 	CWnd::PostNcDestroy();
 }
@@ -128,19 +145,48 @@ int CSharingWifiDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		m_cImgBtnClose.Create(_T(""), WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_BTNCLOSE);
 		m_cImgBtnClose.SetImage(lpCreateStruct->hInstance, IDB_BTNCLOSE, PNG, 1);
 	}
+	if (NULL == m_cImgBtnSave.m_hWnd)
+	{
+		m_cImgBtnSave.Create(_T(""), WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_BTNSAVE);
+		m_cImgBtnSave.SetImage(lpCreateStruct->hInstance, IDB_BTNSAVE, PNG);
+	}
 
-	m_sNotifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-	m_sNotifyIconData.hWnd = m_hWnd;
-	m_sNotifyIconData.uID = IDR_MAINFRAME;
-	m_sNotifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-	m_sNotifyIconData.uCallbackMessage = WM_NOTIFYICON;
-	m_sNotifyIconData.hIcon = (HICON)GetClassLong(m_hWnd, GCL_HICON);
-	strcpy_s(m_sNotifyIconData.szTip, 20, _T("wifi"));
-	Shell_NotifyIcon(NIM_ADD, &m_sNotifyIconData);
+	if (NULL == m_cEdit[0].m_hWnd)
+	{
+		//m_cEdit[0].Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP, CRect(120, 250, 220, 270), this, 10001);
+		//m_cEdit[0].SetFocus();
+	}
+	if (NULL == m_cEdit[1].m_hWnd)
+	{
+		//m_cEdit[1].Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_PASSWORD, CRect(120, 280, 220, 300), this, 10001);
+	}
 
-	m_cEdit[0].Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP, CRect(100, 250, 200, 270), this, 10001);
-	m_cEdit[0].SetFocus();
-	m_cEdit[1].Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_PASSWORD, CRect(100, 280, 200, 300), this, 10001);
+	if (NULL == m_sNotifyIconData.hWnd)
+	{
+		m_sNotifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+		m_sNotifyIconData.hWnd = m_hWnd;
+		m_sNotifyIconData.uID = IDR_MAINFRAME;
+		m_sNotifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+		m_sNotifyIconData.uCallbackMessage = WM_NOTIFYICON;
+		m_sNotifyIconData.hIcon = (HICON)GetClassLong(m_hWnd, GCL_HICON);
+		sprintf_s(m_sNotifyIconData.szTip, sizeof(m_sNotifyIconData.szTip), "wifi");
+		Shell_NotifyIcon(NIM_ADD, &m_sNotifyIconData);
+	}
+
+	char szCommand[128];
+	sprintf_s(szCommand, sizeof(szCommand), "netsh wlan set hostednetwork mode=allow ssid=%s key=%s", m_szName, m_szPassword);
+	system(szCommand);
+	sprintf_s(szCommand, sizeof(szCommand), "netsh wlan start hostednetwork");
+	system(szCommand);
+
+	if (m_cEdit[0].m_hWnd)
+	{
+		m_cEdit[0].SetWindowText(m_szName);
+	}
+	if (m_cEdit[1].m_hWnd)
+	{
+		m_cEdit[1].SetWindowText(m_szPassword);
+	}
 
 	return 0;
 }
@@ -182,7 +228,9 @@ void CSharingWifiDlg::OnPaint()
 		int nOldBkMode = dc.SetBkMode(TRANSPARENT);
 
 		dc.DrawText(strText, CRect(0, 0, 50, 17), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_WORD_ELLIPSIS);
-	
+		//dc.DrawText(_T("name"), CRect(50, 250, 120, 270), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_WORD_ELLIPSIS);
+		//dc.DrawText(_T("password"), CRect(50, 280, 120, 300), DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_WORD_ELLIPSIS);
+
 		dc.SetBkMode(nOldBkMode);
 		dc.SelectObject(pOldFont);
 	}
@@ -201,6 +249,10 @@ void CSharingWifiDlg::OnSize(UINT nType, int cx, int cy)
 	if (m_cImgBtnClose.m_hWnd)
 	{
 		m_cImgBtnClose.MoveWindow(cx - 21, 0, 21, 21);
+	}
+	if (m_cImgBtnSave.m_hWnd)
+	{
+		m_cImgBtnSave.MoveWindow(139, 310, 23, 23);
 	}
 }
 
@@ -262,9 +314,12 @@ void CSharingWifiDlg::OnClickedBtnMin()
 {
 	SendMessage(WM_SYSCOMMAND, SC_MINIMIZE, 0);
 }
+void CSharingWifiDlg::OnClickedBtnClose()
+{
+	OnClose();
+}
 void CSharingWifiDlg::OnExit()
 {
-	Shell_NotifyIcon(NIM_DELETE, &m_sNotifyIconData);
 	DestroyWindow();
 }
 
